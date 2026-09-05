@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>NOVA — Personal AI Commerce Agent</title>
+    <meta name="description" content="NOVA is your intelligent AI shopping assistant. Search, compare, and buy products with the power of natural language.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=final-stabilize-1">
+</head>
+<body>
+
+    <!-- ── NOVA First-Open Splash Screen (Phase 1 UI) ──────────────────────────
+         Pure presentation layer. Does not initialise any app logic — the
+         existing init() in app.js runs independently and finishes loading
+         the real UI behind this overlay while it plays. ─────────────────── -->
+    <div class="nova-splash" id="nova-splash" role="presentation" aria-hidden="true">
+        <div class="nova-splash-atmosphere" aria-hidden="true">
+            <span class="nova-mist nova-mist-a"></span>
+            <span class="nova-mist nova-mist-b"></span>
+            <span class="nova-mist nova-mist-c"></span>
+        </div>
+
+        <div class="nova-splash-content">
+            <div class="nova-splash-icon" id="nova-splash-icon" aria-hidden="true">
+                <svg width="72" height="72" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2L25 8V20L14 26L3 20V8L14 2Z" stroke="url(#splashGrad1)" stroke-width="1.6" fill="none"/>
+                    <path d="M14 7L20 10.5V17.5L14 21L8 17.5V10.5L14 7Z" fill="url(#splashGrad2)" opacity="0.85"/>
+                    <circle cx="14" cy="14" r="3" fill="white" opacity="0.92"/>
+                    <defs>
+                        <linearGradient id="splashGrad1" x1="3" y1="2" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="var(--nova-purple-5)"/>
+                            <stop offset="1" stop-color="var(--nova-purple-6)"/>
+                        </linearGradient>
+                        <linearGradient id="splashGrad2" x1="8" y1="7" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="var(--nova-purple-4)"/>
+                            <stop offset="1" stop-color="var(--nova-purple-6)"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="nova-splash-name" id="nova-splash-name">NOVA</div>
+
+            <div class="nova-splash-loader">
+                <div class="nova-splash-loader-track">
+                    <div class="nova-splash-loader-fill" id="nova-splash-loader-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opening theme: trimmed to the ~6s splash sequence with a built-in
+             fade-out. "Embrace" by Sappheiros (via chosic.com) — Creative
+             Commons/royalty-free; keep the artist credit if required by the
+             track's license when you ship this. -->
+        <audio id="nova-splash-music" preload="auto" style="display:none;">
+            <source src="nova-open-theme-2.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <header class="app-header" id="app-header">
+        <div class="header-brand">
+            <div class="brand-logo" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2L25 8V20L14 26L3 20V8L14 2Z" stroke="url(#grad1)" stroke-width="2" fill="none"/>
+                    <path d="M14 7L20 10.5V17.5L14 21L8 17.5V10.5L14 7Z" fill="url(#grad2)" opacity="0.8"/>
+                    <circle cx="14" cy="14" r="3" fill="white" opacity="0.9"/>
+                    <defs>
+                        <linearGradient id="grad1" x1="3" y1="2" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#818cf8"/>
+                            <stop offset="1" stop-color="#c084fc"/>
+                        </linearGradient>
+                        <linearGradient id="grad2" x1="8" y1="7" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#6366f1"/>
+                            <stop offset="1" stop-color="#a855f7"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">NOVA</span>
+                <span class="brand-tagline">AI Commerce Agent</span>
+            </div>
+        </div>
+
+        <div class="header-status">
+            <div class="status-pill" id="status-pill">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Connecting...</span>
+            </div>
+            <div class="market-pill" id="market-pill" title="Shopping Market Scope">
+                <span class="market-flag" id="market-flag">🇮🇳</span>
+                <select id="market-select" class="market-select">
+                    <option value="IN">India (INR ₹)</option>
+                    <option value="US">USA (USD $)</option>
+                    <option value="GB">UK (GBP £)</option>
+                    <option value="GLOBAL">Global ($)</option>
+                </select>
+            </div>
+        </div>
+
+
+        <div class="header-nav-tabs" role="tablist" aria-label="Main Navigation">
+            <button type="button" class="nav-tab active" id="tab-chat" role="tab" aria-selected="true" aria-controls="view-chat">
+                💬 Chat
+            </button>
+            <button type="button" class="nav-tab" id="tab-discover" role="tab" aria-selected="false" aria-controls="view-discover">
+                🔥 Discover
+            </button>
+            <button type="button" class="nav-tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="view-settings">
+                ⚙️ Settings
+            </button>
+            <button type="button" class="nav-tab" id="tab-inspector" role="tab" aria-selected="false" aria-controls="view-catalogue" title="Catalogue Mode">
+                🔍 Catalogue Mode
+            </button>
+        </div>
+
+        <div class="header-actions">
+            <div class="session-badge">
+                <span class="session-label">Session</span>
+                <code id="session-id-val">—</code>
+            </div>
+            <button id="voice-mode-btn" class="btn-ghost btn-voice-mode" title='Open voice assistant mode'>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+                Voice Mode
+            </button>
+            <button id="clear-session-btn" class="btn-ghost btn-danger" title="Reset session and clear cart">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 .49-3.51"></path>
+                </svg>
+                Reset
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Main Workspace Containers ────────────────────────────────────────── -->
+    <main class="app-layout" id="app-layout">
+
+        <!-- ── VIEW 1: CHAT WORKSPACE (Default) ────────────────────────────────── -->
+        <div class="workspace-view active" id="view-chat">
+
+        <!-- ── Left: Chat Panel ────────────────────────────────────────────── -->
+        <section class="chat-panel" aria-label="Chat with NOVA">
+            <div class="chat-messages" id="chat-messages" role="log" aria-live="polite">
+                <!-- Welcome message injected by JS -->
+            </div>
+
+            <div class="chat-input-wrapper">
+                <form class="chat-input-form" id="chat-form" autocomplete="off">
+                    <div class="input-row">
+                        <div class="input-field-wrap">
+                            <input
+                                type="text"
+                                id="chat-input"
+                                class="chat-input"
+                                placeholder="Tell NOVA what you need, your preferences, or what you want to compare"
+                                required
+                                autocomplete="off"
+                                aria-label="Message NOVA"
+                            >
+                            <div class="input-glow" aria-hidden="true"></div>
+                        </div>
+                        <button type="button" id="voice-btn" class="btn-voice" aria-label="Toggle voice mode" title='Voice mode: say "hey nova"'>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="22"></line>
+                            </svg>
+                        </button>
+                        <button type="submit" id="send-btn" class="btn-send" aria-label="Send message">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="voice-status" id="voice-status">Voice off. Click the mic, then say "hey nova".</div>
+
+                    <!-- Suggestion chips -->
+                    <div class="suggestion-chips" id="suggestion-chips">
+                        <button type="button" class="chip" data-msg="Help me choose the right product">Help me choose</button>
+                        <button type="button" class="chip" data-msg="Find options based on my budget and preferences">Find options</button>
+                        <button type="button" class="chip" data-msg="Compare a few products for me">Compare products</button>
+                        <button type="button" class="chip" data-msg="What's in my cart?">🛒 View cart</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ── Right: Sidebar ──────────────────────────────────────────────── -->
+        <aside class="sidebar" aria-label="Cart and tools">
+
+            <!-- Cart Panel -->
+            <div class="sidebar-panel cart-panel" id="cart-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        Shopping Cart
+                    </div>
+                    <span class="cart-badge" id="cart-count-badge">0</span>
+                </div>
+                <div class="cart-items-list" id="cart-items">
+                    <div class="empty-state">
+                        <div class="empty-icon">🛒</div>
+                        <p>Your cart is empty</p>
+                        <span>Ask NOVA to add products</span>
+                    </div>
+                </div>
+                <div class="cart-footer" id="cart-footer">
+                    <div class="cart-total-row">
+                        <span>Total</span>
+                        <strong id="cart-total">₹0.00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Panel (hidden until order created) -->
+            <div class="sidebar-panel order-panel" id="order-panel" style="display:none;" aria-live="polite">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Order Summary
+                    </div>
+                    <span class="order-status-badge" id="order-status-badge">Pending</span>
+                </div>
+                <div class="order-details" id="order-details"></div>
+                <button id="payment-btn" class="btn-pay">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Pay with Razorpay
+                </button>
+                <p class="payment-note" id="payment-demo-note"></p>
+            </div>
+
+            <!-- Agent Tool Console -->
+            <div class="sidebar-panel logs-panel" id="logs-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        Agent Console
+                    </div>
+                    <button class="btn-ghost btn-xs" id="clear-logs-btn" title="Clear logs">Clear</button>
+                </div>
+                <div class="logs-container" id="agent-logs" role="log">
+                    <p class="log-empty">No tools executed yet.</p>
+                </div>
+            </div>
+
+        </aside>
+        </div> <!-- End view-chat -->
+
+        <!-- ── VIEW 2: DISCOVER WORKSPACE ────────────────────────────────────── -->
+        <div class="workspace-view" id="view-discover">
+            <div class="discover-container">
+                <div class="discover-header">
+                    <div class="discover-title-area">
+                        <h2>NOVA Discover</h2>
+                        <p>Real-time feed of live deals, regional festivals, major sports events, movie releases, and official merchandise.</p>
+                    </div>
+                    <div class="discover-filter-pills" id="discover-filters">
+                        <button type="button" class="filter-pill active" data-category="all">⚡ All Updates</button>
+                        <button type="button" class="filter-pill" data-category="deals">🔥 Live Deals</button>
+                        <button type="button" class="filter-pill" data-category="festivals">🎉 Festivals</button>
+                        <button type="button" class="filter-pill" data-category="sports">🏏 Sports & Merch</button>
+                        <button type="button" class="filter-pill" data-category="movies">🎬 Movies & Merch</button>
+                    </div>
+                </div>
+
+                <div class="discover-grid" id="discover-feed-grid">
+                    <div class="discover-loading">
+                        <span class="spinner"></span>
+                        <p>Retrieving live verified discovery updates...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW: CATALOGUE MODE ────────────────────────────────────────── -->
+        <div class="workspace-view" id="view-catalogue">
+            <div class="discover-container">
+                <div class="discover-header">
+                    <div class="discover-title-area">
+                        <h2>Catalogue Mode</h2>
+                        <p>Live products from the current authorized ecommerce page. Same canonical products used by Chat, Voice, Cart, and Checkout.</p>
+                    </div>
+                    <button type="button" class="btn-primary btn-sm" id="catalogue-refresh-btn">Refresh from session</button>
+                </div>
+                <div id="catalogue-meta" class="catalogue-meta"></div>
+                <div class="discover-grid" id="catalogue-product-grid">
+                    <p class="empty-state">Open a supported ecommerce page with the NOVA extension, then return here to inspect detected products.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 3: SETTINGS WORKSPACE ────────────────────────────────────── -->
+        <div class="workspace-view" id="view-settings">
+            <div class="settings-container">
+                <h2>NOVA Integration & Account Settings</h2>
+                <p>Manage permissioned integrations for Google Calendar and Email notification digests.</p>
+
+                <div class="settings-card">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h3>📅 Google Calendar Integration</h3>
+                            <p>Allow NOVA to view and create event reminders (e.g. World Cup finals, festival sales).</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-calendar-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <hr class="setting-divider">
+
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h3>✉️ Email Deal Digests</h3>
+                            <p>Receive personalized digests of top verified deals, sports merchandise, and upcoming events.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-email-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-subrow">
+                        <label for="setting-email-input">Notification Email Address:</label>
+                        <input type="email" id="setting-email-input" class="setting-input" placeholder="your.name@example.com">
+                    </div>
+                    <hr class="setting-divider">
+                    <div class="setting-subrow">
+                        <label for="setting-spending-limit">Expenditure limit (optional, leave blank for none):</label>
+                        <input type="number" min="0" step="1" id="setting-spending-limit" class="setting-input" placeholder="No limit configured">
+                        <button type="button" id="save-settings-btn" class="btn-primary btn-sm">Save Preferences</button>
+                        <span id="settings-status-msg" class="settings-status"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── Checkout Safety Confirmation Modal ──────────────────────────────── -->
+    <div class="checkout-overlay" id="checkout-safety-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Checkout confirmation required">
+        <div class="checkout-safety-card">
+            <div class="safety-shield-icon">🛡️</div>
+            <h2>Confirm Checkout Proceed</h2>
+            <p id="checkout-safety-msg">You are about to proceed to checkout for this item. Do you want NOVA to place the order?</p>
+            <div class="checkout-product-preview" id="checkout-product-preview"></div>
+            <div class="checkout-safety-actions">
+                <button type="button" class="btn-primary" id="checkout-confirm-btn">Yes, Proceed to Checkout</button>
+                <button type="button" class="btn-ghost" id="checkout-cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="voice-fab" id="voice-fab" title='Open NOVA voice mode'>
+        <span class="voice-fab-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+        </span>
+        <span>NOVA Voice</span>
+    </button>
+
+    <!-- ── Payment Success Overlay ─────────────────────────────────────────── -->
+    <div class="payment-overlay" id="payment-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Payment confirmed">
+        <div class="payment-success-card">
+            <div class="success-animation">
+                <div class="success-ring"></div>
+                <div class="success-check">✓</div>
+            </div>
+            <h2>Payment Successful!</h2>
+            <p id="payment-success-msg">Your order has been confirmed.</p>
+            <div class="success-meta" id="payment-success-meta"></div>
+            <button class="btn-primary" id="payment-close-btn">Continue Shopping</button>
+        </div>
+    </div>
+
+    <!-- ── Voice Assistant Overlay ────────────────────────────────────────── -->
+    <div class="voice-overlay" id="voice-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="NOVA voice assistant">
+        <div class="voice-card">
+            <button type="button" class="voice-close-btn" id="voice-close-btn" title="Close voice mode">×</button>
+            <div class="voice-orb" id="voice-orb" aria-hidden="true">
+                <span class="voice-ring ring-one"></span>
+                <span class="voice-ring ring-two"></span>
+                <span class="voice-core">
+                    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                </span>
+            </div>
+            <h2>NOVA Voice</h2>
+            <p id="voice-mode-status">Click Start Voice, then say "hey nova" followed by your request.</p>
+            <div class="voice-transcript" id="voice-transcript">Waiting for voice mode...</div>
+            <div class="voice-actions">
+                <button type="button" class="btn-primary" id="voice-start-btn">Start Voice</button>
+                <button type="button" class="btn-ghost" id="voice-stop-btn">Stop</button>
+            </div>
+        </div>
+    <!-- ── AI Catalog Inspector / Demonstration Mode Modal (Phase 2A) ───────────── -->
+    <div class="payment-overlay" id="catalog-inspector-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="AI Catalog Inspector">
+        <div class="checkout-modal-card" style="max-width:760px; max-height:85vh; overflow-y:auto; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:12px; margin-bottom:16px;">
+                <h2 style="margin:0; font-size:1.3rem;">🔍 AI Catalog Inspector <span style="font-size:0.75rem; color:#818cf8; background:rgba(129,140,248,0.12); padding:3px 8px; border-radius:12px; margin-left:8px;">HACKATHON DEMO MODE</span></h2>
+                <button type="button" id="catalog-inspector-close" class="voice-close-btn" style="position:static; margin:0;">×</button>
+            </div>
+            
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;">
+                Visualizes normalized machine-readable catalog representations consumed by NOVA's AI agent. Verifies exact URLs, pricing, and AI-readability.
+            </p>
+
+            <div id="catalog-inspector-summary" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:16px;">
+                <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <span style="font-size:0.7rem; color:var(--text-muted); display:block;">STATUS</span>
+                    <strong id="inspector-stat-status" style="color:#34d399;">AI-READABLE ✓</strong>
+                </div>
+                <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <span style="font-size:0.7rem; color:var(--text-muted); display:block;">DETECTED PRODUCTS</span>
+                    <strong id="inspector-stat-detected">0</strong>
+                </div>
+                <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <span style="font-size:0.7rem; color:var(--text-muted); display:block;">EXACT URLS</span>
+                    <strong id="inspector-stat-urls">0</strong>
+                </div>
+                <div style="background:rgba(255,255,255,0.04); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <span style="font-size:0.7rem; color:var(--text-muted); display:block;">SOURCE</span>
+                    <strong id="inspector-stat-source" style="font-size:0.8rem; word-break:break-all;">NOVA Catalog</strong>
+                </div>
+            </div>
+
+            <div id="catalog-inspector-products" style="display:flex; flex-direction:column; gap:12px; max-height:400px; overflow-y:auto;">
+                <!-- Product Inspector Cards populated dynamically -->
+            </div>
+
+            <div style="margin-top:16px; text-align:right;">
+                <button type="button" class="btn-primary" id="catalog-inspector-done">Close Inspector</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Razorpay Checkout.js (loaded at runtime only if key is live) -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+    <script src="/static/app.js?v=final-stabilize-1"></script>
+</body>
+</html>

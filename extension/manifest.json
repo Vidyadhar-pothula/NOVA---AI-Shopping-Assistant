@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "NOVA Shopping Assistant",
+  "description": "A floating NOVA assistant for shopping websites, powered by the local NOVA backend.",
+  "version": "0.3.0",
+  "action": {
+    "default_title": "NOVA",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
