@@ -1,5 +1,5 @@
 (function () {
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = "https://nova-ai-shopping-assistant.onrender.com";
   const ROOT_ID = "nova-extension-root";
   const SESSION_KEY = "nova_extension_session_id";
   const SHARED_NOVA_SESSION_ID = "nova_authoritative_cart";
